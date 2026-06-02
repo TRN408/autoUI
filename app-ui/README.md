@@ -1,4 +1,14 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# autoUI
+
+見栄えの悪いサイトやアプリを、**SmartHR Design System など一定の基準に沿った最低限の UI** に仕上げるためのツールです。
+
+- **UI修正** … コードの監査・自動修正、Before/After プレビュー、フォルダ書き出し
+- **ロゴ生成** … SmartHR / Pinterest 配色を使ったロゴ案
+
+## プロダクトの目的
+
+完璧なデザインの再現ではなく、**「最低限ちゃんと見える・使える」状態への底上げ** がゴールです。  
+詳細な開発指針は [`AGENTS.md`](./AGENTS.md) を参照してください。
 
 ## Getting Started
 

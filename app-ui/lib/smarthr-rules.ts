@@ -33,6 +33,13 @@ const FONT_SCALE: { px: number; rem: string; token: string }[] = [
   { px: 32,    rem: "2rem",     token: "XXL" },
 ];
 
+/** SmartHR 行送り: NONE / TIGHT / NORMAL */
+const LINE_HEIGHT_TOKENS: { value: number; label: string }[] = [
+  { value: 1, label: "NONE" },
+  { value: 1.25, label: "TIGHT" },
+  { value: 1.5, label: "NORMAL" },
+];
+
 // Tailwind の汎用色クラス → SmartHR トークン色
 const TAILWIND_COLOR_MAP: Record<string, string> = {
   "text-blue-600":    "text-[#0077c7]",
@@ -54,14 +61,6 @@ const TAILWIND_COLOR_MAP: Record<string, string> = {
   "bg-gray-200":      "bg-[#edebe8]",
 };
 
-// SmartHR UI コンポーネント提案 (React)
-const COMPONENT_HINTS: { pattern: RegExp; hint: string }[] = [
-  { pattern: /<button\b[^>]*>/gi,   hint: "<PrimaryButton> / <DangerButton> / <Button> (smarthr-ui)" },
-  { pattern: /<input\b[^>]*type="text"[^>]*>/gi, hint: "<Input> (smarthr-ui)" },
-  { pattern: /<select\b[^>]*>/gi,   hint: "<Select> (smarthr-ui)" },
-  { pattern: /<textarea\b[^>]*>/gi, hint: "<Textarea> (smarthr-ui)" },
-];
-
 // ── ユーティリティ ────────────────────────────
 
 function lineOf(code: string, index: number): number {
@@ -75,6 +74,61 @@ function closestFontSize(px: number): { rem: string; token: string } | null {
     if (!best || d < best.dist) best = { rem: s.rem, token: s.token, dist: d };
   }
   return best && best.dist <= 4 ? { rem: best.rem, token: best.token } : null;
+}
+
+function nearestFontScaleByPx(px: number): { rem: string; token: string } {
+  let best = FONT_SCALE[0]!;
+  let bestDist = Infinity;
+  for (const s of FONT_SCALE) {
+    const d = Math.abs(s.px - px);
+    if (d < bestDist) {
+      bestDist = d;
+      best = s;
+    }
+  }
+  return { rem: best.rem, token: best.token };
+}
+
+function closestLineHeight(val: number): { value: number; label: string } {
+  let best = LINE_HEIGHT_TOKENS[0]!;
+  let bestDist = Infinity;
+  for (const t of LINE_HEIGHT_TOKENS) {
+    const d = Math.abs(t.value - val);
+    if (d < bestDist) {
+      bestDist = d;
+      best = t;
+    }
+  }
+  return best;
+}
+
+function isSmartHRLineHeight(val: number): boolean {
+  return LINE_HEIGHT_TOKENS.some((t) => Math.abs(t.value - val) < 0.02);
+}
+
+function ensureSmarthrUiImports(code: string, names: string[]): string {
+  if (names.length === 0) return code;
+  const sorted = [...new Set(names)].sort();
+  const existing = code.match(/import\s+\{([^}]+)\}\s+from\s+['"]smarthr-ui['"]/);
+  if (existing) {
+    const merged = new Set(
+      existing[1]!
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .concat(sorted)
+    );
+    return code.replace(
+      /import\s+\{([^}]+)\}\s+from\s+['"]smarthr-ui['"]/,
+      `import { ${[...merged].join(", ")} } from 'smarthr-ui'`
+    );
+  }
+  const line = `import { ${sorted.join(", ")} } from 'smarthr-ui';\n`;
+  const firstImport = code.match(/^import\s.+$/m);
+  if (firstImport) {
+    return code.replace(/^import\s.+$/m, (m) => `${m}\n${line.trim()}`);
+  }
+  return line + code;
 }
 
 // ── 言語自動検出 ──────────────────────────────
@@ -113,35 +167,31 @@ interface PropFixResult {
   violations: Omit<Violation, "line">[];
 }
 
+function replaceNonSmartHRHexColors(
+  value: string,
+  violations: Omit<Violation, "line">[]
+): string {
+  return value.replace(/#([0-9a-fA-F]{3,8})\b/g, (hex) => {
+    if (isSmartHRColor(hex)) return hex;
+    const { color: closest, distance } = findClosestColor(hex);
+    const severity: RuleSeverity = distance < 30 ? "warning" : "error";
+    violations.push({
+      severity,
+      original: hex,
+      message: `"${hex}" はSmartHRカラーパレット外の色です`,
+      suggestion: `${closest.name} (${closest.hex}) に置換しました [${closest.group}]`,
+    });
+    return closest.hex;
+  });
+}
+
 function fixCssPropValue(propName: string, value: string): PropFixResult {
   const prop = propName.trim().toLowerCase();
   const violations: Omit<Violation, "line">[] = [];
   let fixed = value;
 
-  // ── 色プロパティ ──
-  const isColorProp =
-    prop === "color" ||
-    prop === "background-color" ||
-    prop === "background" ||
-    prop === "border-color" ||
-    prop.endsWith("-color") ||
-    prop === "fill" ||
-    prop === "stroke";
-
-  if (isColorProp) {
-    fixed = fixed.replace(/#([0-9a-fA-F]{3,6})\b/g, (hex) => {
-      if (isSmartHRColor(hex)) return hex; // すでに SmartHR カラー
-      const { color: closest, distance } = findClosestColor(hex);
-      const severity: RuleSeverity = distance < 30 ? "warning" : "error";
-      violations.push({
-        severity,
-        original: hex,
-        message: `"${hex}" はSmartHRカラーパレット外の色です`,
-        suggestion: `最も近い候補: ${closest.name} (${closest.hex}) [${closest.group}]`,
-      });
-      return hex;
-    });
-  }
+  // 値内の #hex はプロパティ種別に関わらず置換（--bg 等のカスタムプロパティも対象）
+  fixed = replaceNonSmartHRHexColors(fixed, violations);
 
   // ── フォントサイズ ──
   if (prop === "font-size") {
@@ -166,31 +216,36 @@ function fixCssPropValue(propName: string, value: string): PropFixResult {
       return `${num}px`;
     });
 
-    // rem 値がスケール外でないかチェック
+    // rem 値がスケール外 → 最寄りトークンに置換
     fixed = fixed.replace(/([\d.]+)rem\b/g, (_, num) => {
       const px = parseFloat(num) * 16;
-      if (!closestFontSize(px)) {
-        violations.push({
-          severity: "error",
-          original: `${num}rem`,
-          message: `font-size: ${num}rem はSmartHRタイポグラフィスケール外です`,
-          suggestion: "SmartHRのフォントサイズトークン (XXS〜XXL) を使用してください",
-        });
-      }
-      return `${num}rem`;
+      const near = closestFontSize(px);
+      if (near) return `${num}rem`;
+      const best = nearestFontScaleByPx(px);
+      violations.push({
+        severity: "error",
+        original: `${num}rem`,
+        message: `font-size: ${num}rem はSmartHRタイポグラフィスケール外です`,
+        suggestion: `${best.rem} (SmartHR ${best.token}トークン) に変更しました`,
+      });
+      return best.rem;
     });
   }
 
   // ── line-height ──
   if (prop === "line-height") {
-    const val = parseFloat(value);
-    if (!isNaN(val) && (val > 2 || (val < 1 && val !== 0))) {
+    const trimmed = value.trim();
+    const unitless = /^-?[\d.]+$/.test(trimmed);
+    const val = parseFloat(trimmed);
+    if (!isNaN(val) && unitless && val !== 0 && !isSmartHRLineHeight(val)) {
+      const best = closestLineHeight(val);
       violations.push({
         severity: "info",
-        original: value.trim(),
-        message: `line-height: ${val} はSmartHR行送りルール外の可能性があります`,
-        suggestion: "見出し: 1.25 (TIGHT) / 本文: 1.5 (NORMAL) / ラベル: 1 (NONE)",
+        original: trimmed,
+        message: `line-height: ${val} はSmartHR行送りルール外です`,
+        suggestion: `${best.value} (${best.label}) に変更しました`,
       });
+      fixed = String(best.value);
     }
   }
 
@@ -327,19 +382,70 @@ function fixReact(code: string, lang: Language): { fixed: string; violations: Vi
     }
   );
 
-  // 4. SmartHR UI コンポーネント提案
-  for (const { pattern, hint } of COMPONENT_HINTS) {
-    let m;
-    const re = new RegExp(pattern.source, pattern.flags);
-    while ((m = re.exec(fixed)) !== null) {
-      violations.push({
-        line: lineOf(fixed, m.index),
-        severity: "info",
-        original: m[0].substring(0, 50) + (m[0].length > 50 ? "…" : ""),
-        message: "SmartHR UIコンポーネントの利用を検討してください",
-        suggestion: hint,
-      });
-    }
+  // 4. 素の HTML 要素 → smarthr-ui コンポーネントへ置換
+  const uiImports = new Set<string>();
+
+  fixed = fixed.replace(/<button\b/g, (match, offset) => {
+    uiImports.add("Button");
+    violations.push({
+      line: lineOf(fixed, offset),
+      severity: "info",
+      original: match,
+      message: "<button> を SmartHR UI の Button に置換しました",
+      suggestion: "import { Button } from 'smarthr-ui'",
+    });
+    return "<Button";
+  });
+  fixed = fixed.replace(/<\/button\s*>/g, "</Button>");
+
+  fixed = fixed.replace(/<input\b([^>]*)\/?>/g, (match, attrs, offset) => {
+    const isText =
+      !/\btype\s*=/i.test(attrs) || /\btype\s*=\s*["']?text["']?/i.test(attrs);
+    if (!isText) return match;
+    uiImports.add("Input");
+    const cleaned = attrs
+      .replace(/\s*type\s*=\s*["']text["']/gi, "")
+      .replace(/\s{2,}/g, " ")
+      .trim();
+    violations.push({
+      line: lineOf(fixed, offset),
+      severity: "info",
+      original: match.substring(0, 50) + (match.length > 50 ? "…" : ""),
+      message: '<input type="text"> を SmartHR UI の Input に置換しました',
+      suggestion: "import { Input } from 'smarthr-ui'",
+    });
+    const space = cleaned ? ` ${cleaned}` : "";
+    return match.endsWith("/>") ? `<Input${space} />` : `<Input${space}>`;
+  });
+
+  fixed = fixed.replace(/<select\b/g, (match, offset) => {
+    uiImports.add("Select");
+    violations.push({
+      line: lineOf(fixed, offset),
+      severity: "info",
+      original: match,
+      message: "<select> を SmartHR UI の Select に置換しました",
+      suggestion: "import { Select } from 'smarthr-ui'",
+    });
+    return "<Select";
+  });
+  fixed = fixed.replace(/<\/select\s*>/g, "</Select>");
+
+  fixed = fixed.replace(/<textarea\b/g, (match, offset) => {
+    uiImports.add("Textarea");
+    violations.push({
+      line: lineOf(fixed, offset),
+      severity: "info",
+      original: match,
+      message: "<textarea> を SmartHR UI の Textarea に置換しました",
+      suggestion: "import { Textarea } from 'smarthr-ui'",
+    });
+    return "<Textarea";
+  });
+  fixed = fixed.replace(/<\/textarea\s*>/g, "</Textarea>");
+
+  if (uiImports.size > 0) {
+    fixed = ensureSmarthrUiImports(fixed, [...uiImports]);
   }
 
   return { fixed, violations };
