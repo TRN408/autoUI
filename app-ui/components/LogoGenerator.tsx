@@ -3,6 +3,7 @@
 import { useRef, useEffect, useState, useCallback } from "react";
 import { SMARTHR_PALETTE, PALETTE_GROUPS, SmartHRColor } from "@/lib/smarthr-palette";
 import { PINTEREST_SCHEMES } from "@/lib/pinterest-schemes";
+import { SMARTHR_12_SCHEMES, ColorScheme } from "@/lib/color-schemes";
 
 // ── ロゴスタイル ──────────────────────────────────
 type LogoLayout   = "icon-text-h" | "icon-text-v" | "icon-only" | "text-only";
@@ -34,27 +35,7 @@ const DEFAULT: LogoConfig = {
 };
 
 // ── カラースキームプリセット ──────────────────────────
-interface ColorScheme {
-  name:    string;
-  primary: string;  // アイコン背景
-  text:    string;  // テキスト
-  bg:      string;  // 背景
-}
-
-const COLOR_SCHEMES: ColorScheme[] = [
-  { name: "SmartHR",  primary: "#00c4cc", text: "#23221f", bg: "#ffffff"  },
-  { name: "Aqua",     primary: "#12abb1", text: "#23221f", bg: "#d4f4f5"  },
-  { name: "Marine",   primary: "#0075e3", text: "#ffffff", bg: "#26519f"  },
-  { name: "Sky",      primary: "#32b7f0", text: "#23221f", bg: "#ddf2fb"  },
-  { name: "Galaxy",   primary: "#8c5eee", text: "#ffffff", bg: "#eee5fd"  },
-  { name: "Sakura",   primary: "#d362af", text: "#ffffff", bg: "#82407c"  },
-  { name: "Momiji",   primary: "#ec5a55", text: "#ffffff", bg: "#a53f3f"  },
-  { name: "Sunlight", primary: "#f56121", text: "#ffffff", bg: "#faf2d0"  },
-  { name: "Grass",    primary: "#3dcc65", text: "#23221f", bg: "#e6f2c8"  },
-  { name: "Earth",    primary: "#ba621e", text: "#ffffff", bg: "#fbede1"  },
-  { name: "Stone",    primary: "#4e4c49", text: "#23221f", bg: "#f8f7f6"  },
-  { name: "Dark",     primary: "#00c4cc", text: "#ffffff", bg: "#23221f"  },
-];
+// SmartHR 12パターンは `lib/color-schemes.ts` に集約
 
 const LAYOUTS: { value: LogoLayout; label: string }[] = [
   { value: "icon-text-h", label: "横並び" },
@@ -294,7 +275,7 @@ function SchemeSelector({
 }) {
   const [source, setSource] = useState<SchemeSource>("smarthr");
 
-  const schemes = source === "smarthr" ? COLOR_SCHEMES : PINTEREST_SCHEMES;
+  const schemes = source === "smarthr" ? SMARTHR_12_SCHEMES : PINTEREST_SCHEMES;
 
   const isActive = (s: { primary: string; text: string; bg: string }) =>
     cfg.primaryColor === s.primary && cfg.textColor === s.text && cfg.bgColor === s.bg;

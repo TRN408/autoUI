@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { analyzeAndFix, detectLanguage, Violation, Language } from "@/lib/smarthr-rules";
 import LogoGenerator from "@/components/LogoGenerator";
+import { SMARTHR_12_SCHEMES, ColorScheme } from "@/lib/color-schemes";
+import { PINTEREST_SCHEMES } from "@/lib/pinterest-schemes";
 
 // ── タブ定義 ──────────────────────────────────────
 type AppTab = "ui-fix" | "logo";
@@ -84,21 +86,21 @@ function UIFixPanel() {
       {/* Controls */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-[#706d65]">検出言語</span>
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#0077c7] text-white text-xs font-medium">
+          <span className="text-xs text-[var(--ui-muted)]">検出言語</span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[var(--ui-accent)] text-[var(--ui-accent-contrast)] text-xs font-medium">
             <svg className="w-3 h-3" viewBox="0 0 12 12" fill="none">
-              <circle cx="6" cy="6" r="5" stroke="white" strokeWidth="1.5"/>
-              <path d="M4 6l1.5 1.5L8 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <circle cx="6" cy="6" r="5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M4 6l1.5 1.5L8 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             {langLabel}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-[#706d65]">変更</span>
+          <span className="text-xs text-[var(--ui-muted)]">変更</span>
           <select
             value={overrideLang}
             onChange={(e) => setOverrideLang(e.target.value as Language | "")}
-            className="border border-[#d6d3d0] rounded px-2.5 py-1 text-xs bg-white text-[#706d65] focus:outline-none focus:ring-2 focus:ring-[#0077c7]"
+            className="border border-[var(--ui-border)] rounded px-2.5 py-1 text-xs bg-[var(--ui-surface)] text-[var(--ui-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-accent)]"
           >
             <option value="">自動</option>
             {LANGUAGES.map((l) => (
@@ -109,7 +111,7 @@ function UIFixPanel() {
         <button
           onClick={handleFix}
           disabled={!input.trim()}
-          className="ml-auto px-5 py-2 bg-[#0077c7] text-white rounded text-sm font-medium hover:bg-[#005fa3] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="ml-auto px-5 py-2 bg-[var(--ui-accent)] text-[var(--ui-accent-contrast)] rounded text-sm font-medium hover:bg-[var(--ui-accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           SmartHR基準に修正
         </button>
@@ -118,32 +120,32 @@ function UIFixPanel() {
       {/* Editor panels */}
       <div className="grid grid-cols-2 gap-4 flex-1 min-h-0">
         {/* Input */}
-        <div className="flex flex-col bg-white rounded border border-[#d6d3d0] overflow-hidden">
-          <div className="px-4 py-2 border-b border-[#d6d3d0] bg-[#edebe8] flex items-center justify-between">
-            <span className="text-xs font-medium text-[#706d65]">入力コード</span>
+        <div className="flex flex-col bg-[var(--ui-surface)] rounded border border-[var(--ui-border)] overflow-hidden">
+          <div className="px-4 py-2 border-b border-[var(--ui-border)] bg-[var(--ui-surface-2)] flex items-center justify-between">
+            <span className="text-xs font-medium text-[var(--ui-muted)]">入力コード</span>
             {input && <span className="text-[10px] text-[#c1bdb7]">{input.split("\n").length} 行</span>}
           </div>
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="コードを貼り付けると言語を自動検出して修正します"
-            className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none text-[#23221e] placeholder-[#c1bdb7] leading-relaxed"
+            className="flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none text-[var(--ui-text)] placeholder-[#c1bdb7] leading-relaxed bg-transparent"
             spellCheck={false}
           />
         </div>
 
         {/* Output */}
-        <div className="flex flex-col bg-white rounded border border-[#d6d3d0] overflow-hidden">
-          <div className="border-b border-[#d6d3d0] bg-[#edebe8] flex items-center">
+        <div className="flex flex-col bg-[var(--ui-surface)] rounded border border-[var(--ui-border)] overflow-hidden">
+          <div className="border-b border-[var(--ui-border)] bg-[var(--ui-surface-2)] flex items-center">
             <button
               onClick={() => setActiveTab("code")}
-              className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === "code" ? "border-[#0077c7] text-[#0077c7] bg-white" : "border-transparent text-[#706d65] hover:text-[#23221e]"}`}
+              className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors ${activeTab === "code" ? "border-[var(--ui-accent)] text-[var(--ui-accent)] bg-[var(--ui-surface)]" : "border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-text)]"}`}
             >
               修正済みコード
             </button>
             <button
               onClick={() => setActiveTab("violations")}
-              className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${activeTab === "violations" ? "border-[#0077c7] text-[#0077c7] bg-white" : "border-transparent text-[#706d65] hover:text-[#23221e]"}`}
+              className={`px-4 py-2 text-xs font-medium border-b-2 transition-colors flex items-center gap-1.5 ${activeTab === "violations" ? "border-[var(--ui-accent)] text-[var(--ui-accent)] bg-[var(--ui-surface)]" : "border-transparent text-[var(--ui-muted)] hover:text-[var(--ui-text)]"}`}
             >
               違反レポート
               {violations.length > 0 && (
@@ -153,7 +155,7 @@ function UIFixPanel() {
               )}
             </button>
             {output && activeTab === "code" && (
-              <button onClick={handleCopy} className="ml-auto mr-3 text-xs text-[#0071c1] hover:underline">
+              <button onClick={handleCopy} className="ml-auto mr-3 text-xs text-[var(--ui-accent)] hover:underline">
                 {copied ? "コピー済み!" : "コピー"}
               </button>
             )}
@@ -161,7 +163,7 @@ function UIFixPanel() {
           <div className="flex-1 overflow-auto">
             {activeTab === "code" ? (
               output ? (
-                <pre className="p-4 font-mono text-sm whitespace-pre-wrap text-[#23221e] leading-relaxed">{output}</pre>
+                <pre className="p-4 font-mono text-sm whitespace-pre-wrap text-[var(--ui-text)] leading-relaxed">{output}</pre>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center gap-2 text-[#c1bdb7]">
                   <svg className="w-8 h-8 opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -174,7 +176,7 @@ function UIFixPanel() {
             ) : (
               <div className="p-4">
                 {violations.length === 0 ? (
-                  <div className="text-sm text-[#706d65] text-center py-8">
+                    <div className="text-sm text-[var(--ui-muted)] text-center py-8">
                     {output ? "✓ 違反はありませんでした" : "修正を実行してください"}
                   </div>
                 ) : (
@@ -191,11 +193,11 @@ function UIFixPanel() {
                           <div key={i} className="rounded border p-3 text-xs" style={{ borderColor: s.border, backgroundColor: s.bg }}>
                             <div className="flex items-center gap-2 mb-1.5">
                               <span className="text-[10px] font-bold px-1.5 py-0.5 rounded text-white" style={{ backgroundColor: s.badge }}>{s.label}</span>
-                              <span className="text-[#706d65]">行 {v.line}</span>
+                              <span className="text-[var(--ui-muted)]">行 {v.line}</span>
                             </div>
-                            <p className="font-medium text-[#23221e] mb-1">{v.message}</p>
-                            {v.original && <code className="block text-[#706d65] bg-white/70 px-2 py-0.5 rounded font-mono mb-1 break-all">{v.original}</code>}
-                            {v.suggestion && <p className="text-[#0071c1]">→ {v.suggestion}</p>}
+                            <p className="font-medium text-[var(--ui-text)] mb-1">{v.message}</p>
+                            {v.original && <code className="block text-[var(--ui-muted)] bg-white/70 px-2 py-0.5 rounded font-mono mb-1 break-all">{v.original}</code>}
+                            {v.suggestion && <p className="text-[var(--ui-accent)]">→ {v.suggestion}</p>}
                           </div>
                         );
                       })}
@@ -215,20 +217,38 @@ function UIFixPanel() {
 
 export default function Home() {
   const [appTab, setAppTab] = useState<AppTab>("ui-fix");
+  const [uiSchemeId, setUiSchemeId] = useState<string>("smarthr:SmartHR");
+
+  const uiScheme: ColorScheme | undefined = (() => {
+    const [src, name] = uiSchemeId.split(":", 2);
+    if (src === "smarthr") return SMARTHR_12_SCHEMES.find((s) => s.name === name);
+    if (src === "pinterest") return PINTEREST_SCHEMES.find((s) => s.name === name);
+    return undefined;
+  })();
+
+  const uiVars = uiScheme
+    ? ({
+        ["--ui-bg" as any]: uiScheme.bg,
+        ["--ui-text" as any]: uiScheme.text,
+        ["--ui-accent" as any]: uiScheme.primary,
+        ["--ui-accent-hover" as any]: uiScheme.primary,
+        ["--ui-accent-contrast" as any]: uiScheme.bg,
+      } as React.CSSProperties)
+    : undefined;
 
   return (
-    <div className="min-h-screen bg-[#f8f7f6] text-[#23221e] flex flex-col">
+    <div className="min-h-screen bg-[var(--ui-bg)] text-[var(--ui-text)] flex flex-col" style={uiVars}>
       {/* Header */}
-      <header className="bg-white border-b border-[#d6d3d0] px-6 py-3 flex-shrink-0">
+      <header className="bg-[var(--ui-surface)] border-b border-[var(--ui-border)] px-6 py-3 flex-shrink-0">
         <div className="max-w-7xl mx-auto flex items-center gap-4">
           {/* ロゴ */}
           <div className="flex items-center gap-3 mr-4">
-            <div className="w-8 h-8 bg-[#0077c7] rounded flex items-center justify-center flex-shrink-0">
-              <span className="text-white text-sm font-bold">S</span>
+            <div className="w-8 h-8 bg-[var(--ui-accent)] rounded flex items-center justify-center flex-shrink-0">
+              <span className="text-[var(--ui-accent-contrast)] text-sm font-bold">S</span>
             </div>
             <div>
               <h1 className="text-base font-semibold leading-tight">autoUI</h1>
-              <p className="text-xs text-[#706d65]">SmartHR Design System</p>
+              <p className="text-xs text-[var(--ui-muted)]">SmartHR Design System</p>
             </div>
           </div>
 
@@ -240,8 +260,8 @@ export default function Home() {
                 onClick={() => setAppTab(tab.value)}
                 className={`flex items-center gap-2 px-4 py-2 rounded text-sm font-medium transition-colors ${
                   appTab === tab.value
-                    ? "bg-[#0077c7] text-white"
-                    : "text-[#706d65] hover:bg-[#f2f1f0] hover:text-[#23221e]"
+                    ? "bg-[var(--ui-accent)] text-[var(--ui-accent-contrast)]"
+                    : "text-[var(--ui-muted)] hover:bg-[var(--ui-border-soft)] hover:text-[var(--ui-text)]"
                 }`}
               >
                 {tab.icon}
@@ -249,6 +269,31 @@ export default function Home() {
               </button>
             ))}
           </nav>
+
+          {/* 配色セレクタ */}
+          <div className="ml-auto flex items-center gap-2">
+            <span className="text-xs text-[var(--ui-muted)]">配色</span>
+            <select
+              value={uiSchemeId}
+              onChange={(e) => setUiSchemeId(e.target.value)}
+              className="border border-[var(--ui-border)] rounded px-2.5 py-1 text-xs bg-[var(--ui-surface)] text-[var(--ui-text)] focus:outline-none focus:ring-2 focus:ring-[var(--ui-accent)]"
+            >
+              <optgroup label="SmartHR (12)">
+                {SMARTHR_12_SCHEMES.map((s) => (
+                  <option key={`smarthr:${s.name}`} value={`smarthr:${s.name}`}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label={`Pinterest (${PINTEREST_SCHEMES.length})`}>
+                {PINTEREST_SCHEMES.map((s) => (
+                  <option key={`pinterest:${s.name}`} value={`pinterest:${s.name}`}>
+                    {s.name}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+          </div>
         </div>
       </header>
 
