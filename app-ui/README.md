@@ -1,46 +1,38 @@
-# autoUI
+# autoUI — アプリケーション
 
-見栄えの悪いサイトやアプリを、**SmartHR Design System など一定の基準に沿った最低限の UI** に仕上げるためのツールです。
+Next.js で動作する autoUI のフロントエンドです。  
+リポジトリ全体の説明は [ルート README](../README.md) を参照してください。
 
-- **UI修正** … コードの監査・自動修正、Before/After プレビュー、フォルダ書き出し
-- **ロゴ生成** … SmartHR / Pinterest 配色を使ったロゴ案
-
-## プロダクトの目的
-
-完璧なデザインの再現ではなく、**「最低限ちゃんと見える・使える」状態への底上げ** がゴールです。  
-詳細な開発指針は [`AGENTS.md`](./AGENTS.md) を参照してください。
-
-## Getting Started
-
-First, run the development server:
+## セットアップ
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+[http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## スクリプト
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| コマンド | 説明 |
+|----------|------|
+| `npm run dev` | 開発サーバー |
+| `npm run build` | 本番ビルド |
+| `npm run start` | 本番サーバー |
+| `npm run lint` | ESLint |
 
-## Learn More
+## 主要ファイル
 
-To learn more about Next.js, take a look at the following resources:
+| パス | 役割 |
+|------|------|
+| `app/page.tsx` | UI修正・ロゴ生成のメイン画面 |
+| `lib/smarthr-rules.ts` | SmartHR 基準の監査・自動修正エンジン |
+| `lib/theme-overlay.ts` | アップロードサイト向け配色プレビュー |
+| `lib/color-schemes.ts` | SmartHR 12 配色 |
+| `lib/pinterest-schemes.ts` | Pinterest 配色 |
+| `app/api/project/upload/` | フォルダ一時アップロード API |
+| `app/__project/` | アップロードファイルのプレビュー配信 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 開発指針
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[`AGENTS.md`](./AGENTS.md) にプロダクトの目的と実装判断の指針を記載しています。
